@@ -1,5 +1,6 @@
 {
   "name": "steam-upbalance",
+  "author": "re2xov",
   "version": "0.1.0",
   "private": true,
   "scripts": {
