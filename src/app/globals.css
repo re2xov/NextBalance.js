@@ -11,7 +11,30 @@
   --purple: rgb(82,71,185);
   
 }
+.paymentsys_ccloud{
 
+
+
+  border-color:rgb(82,71,185) ;
+}
+.paymentsys_rkassa{
+
+  background-size: cover;
+  border-color:rgb(82,71,185) ;
+}
+
+.glass-effect{
+  background: white;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.37);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius:32px;
+}
+img{
+
+
+}
 @theme inline {
 }
 
