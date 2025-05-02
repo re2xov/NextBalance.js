@@ -3,6 +3,7 @@ import Image from "next/image";
 import Head from "next/head";
 import useWindowSize from '@/hooks/useWindowSize';
 import {useState, useEffect} from 'react';
+import { useRouter } from "next/navigation";
 
 
 
@@ -11,20 +12,8 @@ export default function Home() {
   const {width, height} = useWindowSize();
   const [inputValue, setInputValue] = useState('');
 
-  const [selectedItems, setSelectedItems] = useState([])
 
-  const toggleItem = (item) => {
-    setSelectedItems(prev => 
-      prev.includes(item) 
-        ? prev.filter(i => i !== item) 
-        : [...prev, item]
-    )
-  }
-  let resultAmount;
-  let forResult;
-
-  let widthInt;
-
+  
 
   
  const calculateResult = () => {
@@ -44,10 +33,46 @@ export default function Home() {
     isMobile = false;
   }
   
-  const items = ['Option 1', 'Option 2', 'Option 3']
+
   var user = 'User';
   var currentFee = 10;
+  const [formData, setFormData] = useState({ paymentsys: '', amount: '', nickname: '', promo: '' });
+  const [response, setResponse] = useState(null);
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const res = await fetch('/api/post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      const data = await res.json();
+      setResponse(data);
+    } catch (error) {
+      console.error('Ошибка:', error);
+    }
+
+
+
+    const data = await res.json();
+      
+    if (data.redirectUrl) {
+      // Редирект на платежную систему
+      window.location.href = data.redirectUrl;
+    } else {
+      alert(data.error || "Ошибка платежа");
+    }
+  };
+  const handleChange = (e) => {
+    const value = e.target.value;
+    setInputValue(value); // Обновляем inputValue
+    setFormData({ ...formData, amount: value });
+  }
 
   var noteByDevice = "~ Комиссия пополнения составляет {currentFee} процентов";
   return (<>
@@ -62,33 +87,51 @@ export default function Home() {
         </h2>
        </div>
        
-       <form className="w-full  flex justify-center ">
-        <div className="block-with-upbalance h-full pb-4 flex w-7/10  bg-white rounded-lg ">
+       <form className="w-full  flex justify-center " onSubmit={handleSubmit}>
+        <div className="block-with-upbalance h-full pb-4 flex w-7/10 glass-effect rounded-lg ">
         
         {/* Выбор платежной системы и мб чот еще (подумать над: промокоды) */} 
           <div className="flex flex-col w-1/2 rounded-l-lg mx-auto">
           {/* Адаптировать под платежки + добавить промики и текст */} 
-          <div className="space-y-2  grid flex-col grid-cols-2 ml-auto w-full mt-6">
-      {items.map(item => (
-        //Блок-селект
-        <label key={item} className="block pr-2">
+          <div className="space-y-2  grid flex-col  ml-auto w-2/3 m-auto">
+
+      {//grid-cols-2 
+      }
+        <label className="paymentsys_block  pr-2 w-full">
           <input
             type="checkbox"
-            checked={selectedItems.includes(item)}
-            onChange={() => toggleItem(item)}
-            className="hidden" // Скрываем нативный чекбокс
+            name="paymentsys_ccloud"
+            onChange={(e) => setFormData({ ...formData, paymentsys: e.target.name })}
+            className="hidden"
+            // Скрываем нативный чекбокс
           />
-          <div className={`
-            p-4 border rounded-lg cursor-pointer transition-all
-            ${selectedItems.includes(item) 
-              ? 'bg-blue-50 border-blue-500 text-blue-800' 
-              : 'bg-white border-gray-300 hover:border-gray-400'}
-          `}>
-            {item}
+          <div className=" paymentsys_ccloud p-8  border rounded-lg cursor-pointer transition-all">
+          <img src="https://brand.cryptocloud.plus/~gitbook/image?url=https%3A%2F%2Fcontent.gitbook.com%2Fcontent%2F0qmF7ZfuUysWkk3Ugz0i%2Fblobs%2FiLCCqV5aGRlH06swUT6M%2FMain%2520logo.png&width=768&dpr=1&quality=100&sign=373be6e5&sv=2" alt="" />
           </div>
         </label>
-      ))}
+        <label className="paymentsys_block  pr-2 w-full">
+          <input
+            type="checkbox"
+            name="paymentsys_rkassa"
+            onChange={(e) => setFormData({ ...formData, paymentsys: e.target.name })}
+            className="hidden"
+             // Скрываем нативный чекбокс
+          />
+          <div className=" paymentsys_rkassa p-6 border rounded-lg cursor-pointer transition-all">
+          <img src="https://softolet.ru/wp-content/uploads/2018/10/5-15.jpg" alt="" />  
+            
+          </div>
+        </label>
+ 
     </div>
+    <div className="flex flex-col amount mb-2 m-auto w-2/3">
+              <input type="text" name="promo"
+              value={formData.promo}
+              onChange={(e) => setFormData({ ...formData, promo: e.target.value })}
+               className="formInput-main border-1 rounded-lg m-auto w-full p-2" 
+               id="amount" placeholder="Промокод"/>
+              <p className="italic text-sm opacity-50 ">~ Узнать его можно в нашей группе ТГ</p>
+              </div>
           </div>
          
           <div className="flex flex-col w-1/2 rounded-r-lg">
@@ -100,12 +143,15 @@ export default function Home() {
               
               {/* Блок ввода суммы */} 
               <div className="flex flex-col amount mb-2 m-auto w-2/3">
-              <input type="number" name="steam_amountTopUp" value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="formInput-main border-1 rounded-lg m-auto w-full p-2" id="amount" placeholder="Введите сумму платежа"/>
+              <input type="number" name="steam_amountTopUp" value={inputValue || formData.amount} onChange={handleChange} className="formInput-main border-1 rounded-lg m-auto w-full p-2" id="amount" placeholder="Введите сумму платежа"/>
               <p className="italic text-sm opacity-50 ">{isMobile ? `~ Комиссия - ${currentFee}%` : `~ Комиссия за пополнение составит  ${currentFee}  процентов`}</p>
               </div>
               {/* Блок ввода суммы */} 
               <div className="flex flex-col nickname m-auto w-2/3">
-                <input type="text" name="steam_nickname" id="nickname" className="formInput-main border-1 rounded-lg m-auto w-full p-2" placeholder="Введите лог-ин Steam"/>
+                <input type="text"
+                 value={formData.nickname}
+                 onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                 name="steam_nickname" id="nickname" className="formInput-main border-1 rounded-lg m-auto w-full p-2" placeholder="Введите лог-ин Steam"/>
                 <p className="italic items-start text-sm opacity-50 "><a className="underline" href="/instruction/steam-login/">~ Как узнать логин Steam</a></p>
               </div>
 
@@ -122,8 +168,19 @@ export default function Home() {
               
         </div>
         </form>
+
+        {response && (
+        <div>
+          <h3>Ответ сервера:</h3>
+          <pre>{JSON.stringify(response, null, 2)}</pre>
+        </div>
+      )}
+
+
     </div>
     
+
+
     </>
   );
 }
