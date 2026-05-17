@@ -1,15 +1,12 @@
 'use client'
-import Image from "next/image";
-import Head from "next/head";
 import useWindowSize from '@/hooks/useWindowSize';
-import {useState, useEffect} from 'react';
-import { useRouter } from "next/navigation";
+import {useState, type ChangeEvent, type FormEvent} from 'react';
 
 
 
 
 export default function Home() {
-  const {width, height} = useWindowSize();
+  const {width} = useWindowSize();
   const [inputValue, setInputValue] = useState('');
 
 
@@ -34,12 +31,12 @@ export default function Home() {
   }
   
 
-  var user = 'User';
-  var currentFee = 10;
+  const user = 'User';
+  const currentFee = 10;
   const [formData, setFormData] = useState({ paymentsys: '', amount: '', nickname: '', promo: '' });
   const [response, setResponse] = useState(null);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     try {
@@ -53,28 +50,22 @@ export default function Home() {
       
       const data = await res.json();
       setResponse(data);
+
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        alert(data.error || "Ошибка платежа");
+      }
     } catch (error) {
       console.error('Ошибка:', error);
     }
-
-
-
-    const data = await res.json();
-      
-    if (data.redirectUrl) {
-      // Редирект на платежную систему
-      window.location.href = data.redirectUrl;
-    } else {
-      alert(data.error || "Ошибка платежа");
-    }
   };
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value); // Обновляем inputValue
     setFormData({ ...formData, amount: value });
   }
 
-  var noteByDevice = "~ Комиссия пополнения составляет {currentFee} процентов";
   return (<>
 
     <div className="flex flex-col items-center h-screen  justify-center">
